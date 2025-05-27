@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>競馬予想 レース選択</title>
+  <link rel="stylesheet" href="style-index.css" />
+  <style>
+    .title-wrapper {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .title-wrapper h1 {
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .title-wrapper h2 {
+      font-size: 1.5rem;
+      font-weight: normal;
+      color: #333;
+    }
+
+    .race-list {
+      max-width: 700px;
+      margin: auto;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .race-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.7rem;
+      gap: 0.5rem;
+    }
+
+    .race-number {
+      width: 2rem;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .race-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .race-name-input {
+      width: 100%;
+      padding: 0.4rem 2rem 0.4rem 0.4rem;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+    }
+
+    .clear-button {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #888;
+      font-size: 1rem;
+      cursor: pointer;
+      display: none;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .clear-button:hover {
+      color: #000;
+    }
+
+    .race-link {
+      text-decoration: none;
+      background-color: #0066cc;
+      color: white;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      transition: background-color 0.2s;
+      white-space: nowrap;
+    }
+
+    .race-link:hover {
+      background-color: #004b99;
+    }
+  </style>
+</head>
+<body>
+  <div class="title-wrapper">
+    <h1>競馬予想</h1>
+    <h2>レース選択</h2>
+  </div>
+
+  <div class="race-list" id="raceList"></div>
+
+  <script>
+    const raceList = document.getElementById('raceList');
+
+    function createRaceRow(index) {
+      const row = document.createElement('div');
+      row.className = 'race-row';
+
+      const number = document.createElement('div');
+      number.className = 'race-number';
+      number.textContent = index;
+
+      const wrapper = document.createElement('div');
+      wrapper.className = 'race-input-wrapper';
+
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.placeholder = 'レース名を記入してください';
+      input.className = 'race-name-input';
+      input.maxLength = 20;
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'clear-button';
+      clearBtn.textContent = '×';
+
+      wrapper.appendChild(input);
+      wrapper.appendChild(clearBtn);
+
+      const savedName = localStorage.getItem(`raceName_${index}`);
+      input.value = savedName || '';
+      if (input.value) clearBtn.style.display = 'block';
+
+      input.addEventListener('input', () => {
+        localStorage.setItem(`raceName_${index}`, input.value);
+        clearBtn.style.display = input.value ? 'block' : 'none';
+      });
+
+      clearBtn.addEventListener('click', () => {
+        input.value = '';
+        input.dispatchEvent(new Event('input'));
+        input.focus();
+      });
+
+      const link = document.createElement('a');
+      link.href = `race${index}.html`;
+      link.className = 'race-link';
+      link.textContent = '予想へ';
+
+      link.addEventListener('click', () => {
+        const name = input.value.trim();
+        localStorage.setItem('currentRaceName', name || `レース${index}`);
+      });
+
+      row.appendChild(number);
+      row.appendChild(wrapper);
+      row.appendChild(link);
+      raceList.appendChild(row);
+    }
+
+    for (let i = 1; i <= 5; i++) {
+      createRaceRow(i);
+    }
+  </script>
+</body>
+</html>

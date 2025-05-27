@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>レース評価ページ</title>
+  <link rel="stylesheet" href="style-race.css" />
+</head>
+<body>
+  <div class="card header-card">
+    <h1 id="raceTitle">レース評価ページ</h1>
+    <div class="top-link">
+      <a href="index.html"><button class="green-btn">トップページに戻る</button></a>
+      <button class="red-btn" onclick="confirmResetAll()">全リセット</button>
+      <button class="orange-btn" onclick="confirmResetScores()">評価リセット</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="overflow-x: auto;">
+      <table id="evaluationTable">
+        <thead>
+          <tr id="factorHeader">
+            <th>馬番</th>
+            <th>名前</th>
+            <th id="factorControlCell">
+              <button class="factor-btn" style="background-color:#007bff;" onclick="addFactor()">＋</button>
+              <button class="factor-btn" style="background-color:#007bff;" onclick="removeLastFactor()">ー</button>
+            </th>
+            <th>合計点</th>
+          </tr>
+        </thead>
+        <tbody id="horseBody"></tbody>
+      </table>
+    </div>
+
+    <div class="ranking-card">
+      <h2>🏆 ランキング</h2>
+      <ol id="rankingList"></ol>
+    </div>
+  </div>
+
+  <script>
+    const raceName = localStorage.getItem("currentRaceName");
+    if (raceName) document.getElementById("raceTitle").textContent = raceName;
+
+    const maxFactors = 10;
+    const minFactors = 2;
+    const horseCount = 18;
+    const rankPoints = { S: 20, A: 16, B: 12, C: 8, D: 4 };
+    const storageKey = `race-${raceName || 'default'}`;
+    let currentFactors = 0;
+    const headerRow = document.getElementById("factorHeader");
+    const controlCell = document.getElementById("factorControlCell");
+    const body = document.getElementById("horseBody");
+
+    function createHorseRow(index) {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${index}番</td>
+        <td><input type="text" maxlength="9" placeholder="任意入力" oninput="saveData()"/></td>
+        <td></td>
+        <td class="score">0点</td>
+      `;
+      body.appendChild(row);
+    }
+
+    function createSelectCell(value = "") {
+      const td = document.createElement("td");
+      const select = document.createElement("select");
+      ["", "S", "A", "B", "C", "D"].forEach(rank => {
+        const option = document.createElement("option");
+        option.value = rank;
+        option.textContent = rank || "選択";
+        if (rank === value) option.selected = true;
+        select.appendChild(option);
+      });
+      select.addEventListener("change", () => {
+        updateScores();
+        saveData();
+      });
+      td.appendChild(select);
+      return td;
+    }
+
+    function addFactor(name = "") {
+      if (currentFactors >= maxFactors) return;
+      const th = document.createElement("th");
+      const wrapper = document.createElement("div");
+      wrapper.className = "factor-header-wrapper";
+      const input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = `ファクター${currentFactors + 1}`;
+      input.value = name;
+      input.oninput = saveData;
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "✕";
+      delBtn.className = "factor-btn delete-btn";
+      delBtn.onclick = () => removeSpecificFactor(currentFactors);
+      wrapper.append(input, delBtn);
+      th.appendChild(wrapper);
+      headerRow.insertBefore(th, controlCell);
+      [...body.rows].forEach(row => {
+        row.insertBefore(createSelectCell(), row.children[row.children.length - 2]);
+      });
+      currentFactors++;
+      updateScores();
+      saveData();
+    }
+
+    function removeLastFactor() {
+      if (currentFactors > minFactors) removeSpecificFactor(currentFactors - 1);
+    }
+
+    function removeSpecificFactor(index) {
+      if (currentFactors <= minFactors) return;
+      headerRow.removeChild(headerRow.children[2 + index]);
+      [...body.rows].forEach(row => row.removeChild(row.children[2 + index]));
+      currentFactors--;
+      updateScores();
+      saveData();
+    }
+
+    function updateScores() {
+      [...body.rows].forEach(row => {
+        const selects = row.querySelectorAll("select");
+        const total = [...selects].reduce((sum, sel) => sum + (rankPoints[sel.value] || 0), 0);
+        const max = selects.length * 20;
+        const score = max ? Math.round((total / max) * 100) : 0;
+        row.querySelector(".score").textContent = `${score}点`;
+      });
+      updateRanking();
+    }
+
+    function updateRanking() {
+      const results = [...body.rows].map(row => {
+        return {
+          number: row.cells[0].textContent,
+          name: row.cells[1].querySelector("input").value || "名無し",
+          score: parseInt(row.querySelector(".score").textContent) || 0
+        };
+      });
+      results.sort((a, b) => b.score - a.score);
+      const list = document.getElementById("rankingList");
+      list.innerHTML = "";
+      results.forEach((item, i) => {
+        const li = document.createElement("li");
+        if (i === 0) li.className = "gold";
+        else if (i === 1) li.className = "silver";
+        else if (i === 2) li.className = "bronze";
+        li.textContent = `${i + 1}位：${item.number} ${item.name}（${item.score}点）`;
+        list.appendChild(li);
+      });
+    }
+
+    function saveData() {
+      const data = {
+        factors: [...headerRow.children].slice(2, 2 + currentFactors).map(th => th.querySelector("input")?.value || ""),
+        horses: [...body.rows].map(row => ({
+          name: row.cells[1].querySelector("input").value,
+          scores: [...row.querySelectorAll("select")].map(s => s.value)
+        }))
+      };
+      localStorage.setItem(storageKey, JSON.stringify(data));
+    }
+
+    function loadData() {
+      const json = localStorage.getItem(storageKey);
+      if (!json) return;
+      const data = JSON.parse(json);
+      data.factors.forEach(name => addFactor(name));
+      data.horses.forEach((horse, i) => {
+        if (!body.rows[i]) return;
+        body.rows[i].cells[1].querySelector("input").value = horse.name;
+        horse.scores.forEach((val, j) => {
+          const select = body.rows[i].cells[2 + j]?.querySelector("select");
+          if (select) select.value = val;
+        });
+      });
+      updateScores();
+    }
+
+    function confirmResetAll() {
+      if (confirm("すべての評価と設定をリセットします。本当によろしいですか？")) {
+        localStorage.removeItem(storageKey);
+        location.reload();
+      }
+    }
+
+    function confirmResetScores() {
+      if (confirm("すべてのS〜D評価を初期化します。よろしいですか？")) {
+        [...body.querySelectorAll("select")].forEach(s => s.value = "");
+        updateScores();
+        saveData();
+      }
+    }
+
+    for (let i = 1; i <= horseCount; i++) createHorseRow(i);
+    loadData();
+    while (currentFactors < minFactors) addFactor();
+  </script>
+  <footer>
+  <a href="privacy.html">プライバシーポリシー</a>
+  </footer>
+</body>
+</html>
