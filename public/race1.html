@@ -41,6 +41,11 @@
       <h2>🏆 ランキング</h2>
       <ol id="rankingList"></ol>
     </div>
+
+    <div style="text-align: center; margin-top: 1rem;">
+    <button class="blue-btn" onclick="shareOnTwitter()">Xで予想を共有</button>
+    </div>
+
   </div>
 
   <script>
@@ -116,13 +121,26 @@
     }
 
     function removeSpecificFactor(index) {
-      if (currentFactors <= minFactors) return;
-      headerRow.removeChild(headerRow.children[2 + index]);
-      [...body.rows].forEach(row => row.removeChild(row.children[2 + index]));
-      currentFactors--;
-      updateScores();
-      saveData();
+  if (currentFactors <= minFactors) return;
+
+  // ヘッダーのth削除
+  const thIndex = 2 + index;
+  if (headerRow.children.length > thIndex) {
+    headerRow.removeChild(headerRow.children[thIndex]);
+  }
+
+  // 各馬行のtd削除
+  [...body.rows].forEach(row => {
+    const tdIndex = 2 + index;
+    if (row.children.length > tdIndex) {
+      row.removeChild(row.children[tdIndex]);
     }
+  });
+
+  currentFactors--;
+  updateScores();
+  saveData();
+}
 
     function updateScores() {
       [...body.rows].forEach(row => {
@@ -226,6 +244,20 @@
     alert("保存するファクターがありません。");
     return;
   }
+
+  function shareOnTwitter() {
+  const raceTitle = document.getElementById("raceTitle").textContent;
+  const top3 = [...document.querySelectorAll("#rankingList li")]
+    .slice(0, 3)
+    .map(li => li.textContent.replace(/\s+/g, ' '))
+    .join('\n');
+
+  const text = `🏇 ${raceTitle} の予想結果\n\n${top3}\n\n#競馬予想 #AI予想 #馬券王`;
+  const url = encodeURIComponent(location.href);
+  const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+
+  window.open(tweet, '_blank');
+}
 
   localStorage.setItem("factorTemplate", JSON.stringify(factorNames));
   alert("ファクターテンプレートを保存しました！");
