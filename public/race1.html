@@ -92,29 +92,41 @@
     }
 
     function addFactor(name = "") {
-      if (currentFactors >= maxFactors) return;
-      const th = document.createElement("th");
-      const wrapper = document.createElement("div");
-      wrapper.className = "factor-header-wrapper";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = `ファクター${currentFactors + 1}`;
-      input.value = name;
-      input.oninput = saveData;
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "✕";
-      delBtn.className = "factor-btn delete-btn";
-      delBtn.onclick = () => removeSpecificFactor(currentFactors);
-      wrapper.append(input, delBtn);
-      th.appendChild(wrapper);
-      headerRow.insertBefore(th, controlCell);
-      [...body.rows].forEach(row => {
-        row.insertBefore(createSelectCell(), row.children[row.children.length - 2]);
-      });
-      currentFactors++;
-      updateScores();
-      saveData();
-    }
+  if (currentFactors >= maxFactors) return;
+
+  const th = document.createElement("th");
+  const wrapper = document.createElement("div");
+  wrapper.className = "factor-header-wrapper";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = `ファクター${currentFactors + 1}`;
+  input.value = name;
+  input.oninput = saveData;
+
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "✕";
+  delBtn.className = "factor-btn delete-btn";
+
+  // ❗ここが重要：クリック時にインデックスを特定して削除
+  delBtn.onclick = function () {
+    const allFactorThs = [...headerRow.querySelectorAll("th")].filter(th => th.querySelector("input"));
+    const index = allFactorThs.indexOf(th);
+    if (index !== -1) removeSpecificFactor(index);
+  };
+
+  wrapper.append(input, delBtn);
+  th.appendChild(wrapper);
+
+  headerRow.insertBefore(th, controlCell);
+  [...body.rows].forEach(row => {
+    row.insertBefore(createSelectCell(), row.children[row.children.length - 2]);
+  });
+
+  currentFactors++;
+  updateScores();
+  saveData();
+}
 
     function removeLastFactor() {
       if (currentFactors > minFactors) removeSpecificFactor(currentFactors - 1);
