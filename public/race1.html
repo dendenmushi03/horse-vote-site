@@ -123,18 +123,19 @@
     function removeSpecificFactor(index) {
   if (currentFactors <= minFactors) return;
 
-  // ヘッダーのth削除
-  const thIndex = 2 + index;
-  if (headerRow.children.length > thIndex) {
-    headerRow.removeChild(headerRow.children[thIndex]);
-  }
+  // 要素を明示的に取得して削除（children[]でなくquerySelector）
+  const factorThs = [...headerRow.querySelectorAll("th")].filter(th =>
+    th.querySelector("input")
+  );
 
-  // 各馬行のtd削除
+  const thToRemove = factorThs[index];
+  if (thToRemove) thToRemove.remove();
+
+  // 各rowからも同様に該当のファクター列を削除
   [...body.rows].forEach(row => {
-    const tdIndex = 2 + index;
-    if (row.children.length > tdIndex) {
-      row.removeChild(row.children[tdIndex]);
-    }
+    const factorTds = [...row.querySelectorAll("td")].slice(2, 2 + currentFactors);
+    const tdToRemove = factorTds[index];
+    if (tdToRemove) tdToRemove.remove();
   });
 
   currentFactors--;
@@ -230,38 +231,10 @@
     for (let i = 1; i <= horseCount; i++) createHorseRow(i);
     loadData();
     while (currentFactors < minFactors) addFactor();
-
-    function saveToHistory() {
+  
+  function saveToHistory() {
   const raceTitle = document.getElementById("raceTitle").textContent;
   const timestamp = new Date().toLocaleString();
-
-  function saveFactorTemplate() {
-  const factorNames = [...headerRow.children]
-    .slice(2, 2 + currentFactors)
-    .map(th => th.querySelector("input")?.value || "");
-
-  if (factorNames.length === 0) {
-    alert("保存するファクターがありません。");
-    return;
-  }
-
-  function shareOnTwitter() {
-  const raceTitle = document.getElementById("raceTitle").textContent;
-  const top3 = [...document.querySelectorAll("#rankingList li")]
-    .slice(0, 3)
-    .map(li => li.textContent.replace(/\s+/g, ' '))
-    .join('\n');
-
-  const text = `🏇 ${raceTitle} の予想結果\n\n${top3}\n\n#競馬予想 #AI予想 #馬券王`;
-  const url = encodeURIComponent(location.href);
-  const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
-
-  window.open(tweet, '_blank');
-}
-
-  localStorage.setItem("factorTemplate", JSON.stringify(factorNames));
-  alert("ファクターテンプレートを保存しました！");
-}
 
   const data = {
     title: raceTitle,
@@ -278,6 +251,34 @@
   history.push(data);
   localStorage.setItem(key, JSON.stringify(history));
   alert("履歴に保存しました！");
+}
+
+function saveFactorTemplate() {
+  const factorNames = [...headerRow.children]
+    .slice(2, 2 + currentFactors)
+    .map(th => th.querySelector("input")?.value || "");
+
+  if (factorNames.length === 0) {
+    alert("保存するファクターがありません。");
+    return;
+  }
+
+  localStorage.setItem("factorTemplate", JSON.stringify(factorNames));
+  alert("ファクターテンプレートを保存しました！");
+}
+
+function shareOnTwitter() {
+  const raceTitle = document.getElementById("raceTitle").textContent;
+  const top3 = [...document.querySelectorAll("#rankingList li")]
+    .slice(0, 3)
+    .map(li => li.textContent.replace(/\s+/g, ' '))
+    .join('\n');
+
+  const text = `🏇 ${raceTitle} の予想結果\n\n${top3}\n\n#競馬予想 #AI予想 #馬券王`;
+  const url = encodeURIComponent(location.href);
+  const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+
+  window.open(tweet, '_blank');
 }
 
   </script>
