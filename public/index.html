@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>競馬予想 レース選択</title>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2449604975433002"
+     crossorigin="anonymous"></script>
   <link rel="stylesheet" href="style-index.css" />
   <style>
     .title-wrapper {
@@ -98,8 +100,11 @@
     <h2>レース選択</h2>
   </div>
 
+  <div style="text-align: center; margin-bottom: 1rem;">
+  <a href="history.html"><button class="blue-btn">予想履歴を見る</button></a>
+  </div>
   <div class="race-list" id="raceList"></div>
-
+  
   <script>
     const raceList = document.getElementById('raceList');
 
@@ -161,6 +166,7 @@
     for (let i = 1; i <= 5; i++) {
       createRaceRow(i);
     }
+    
   </script>
 </body>
 </html>

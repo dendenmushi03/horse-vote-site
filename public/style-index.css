@@ -129,3 +129,16 @@ footer a {
   color: #0066cc;
   text-decoration: underline;
 }
+
+.blue-btn {
+  background-color: #007bff;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.blue-btn:hover {
+  background-color: #0056b3;
+}

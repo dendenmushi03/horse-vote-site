@@ -13,6 +13,9 @@
       <a href="index.html"><button class="green-btn">トップページに戻る</button></a>
       <button class="red-btn" onclick="confirmResetAll()">全リセット</button>
       <button class="orange-btn" onclick="confirmResetScores()">評価リセット</button>
+      <button class="orange-btn" onclick="saveFactorTemplate()">テンプレ保存</button>
+      <button class="blue-btn" onclick="loadFactorTemplate()">テンプレ読み込み</button>
+      <button class="blue-btn" onclick="saveToHistory()">履歴に保存</button>
     </div>
   </div>
 
@@ -180,6 +183,17 @@
       updateScores();
     }
 
+    function loadFactorTemplate() {
+  const saved = JSON.parse(localStorage.getItem("factorTemplate") || "[]");
+  if (!saved.length) return alert("テンプレートが保存されていません。");
+
+  // 現在のファクターを全削除
+  while (currentFactors > minFactors) removeLastFactor();
+
+  // テンプレを再追加
+  saved.forEach(name => addFactor(name));
+}
+
     function confirmResetAll() {
       if (confirm("すべての評価と設定をリセットします。本当によろしいですか？")) {
         localStorage.removeItem(storageKey);
@@ -198,9 +212,46 @@
     for (let i = 1; i <= horseCount; i++) createHorseRow(i);
     loadData();
     while (currentFactors < minFactors) addFactor();
+
+    function saveToHistory() {
+  const raceTitle = document.getElementById("raceTitle").textContent;
+  const timestamp = new Date().toLocaleString();
+
+  function saveFactorTemplate() {
+  const factorNames = [...headerRow.children]
+    .slice(2, 2 + currentFactors)
+    .map(th => th.querySelector("input")?.value || "");
+
+  if (factorNames.length === 0) {
+    alert("保存するファクターがありません。");
+    return;
+  }
+
+  localStorage.setItem("factorTemplate", JSON.stringify(factorNames));
+  alert("ファクターテンプレートを保存しました！");
+}
+
+  const data = {
+    title: raceTitle,
+    date: timestamp,
+    horses: [...body.rows].map(row => ({
+      number: row.cells[0].textContent,
+      name: row.cells[1].querySelector("input").value,
+      score: row.querySelector(".score").textContent
+    }))
+  };
+
+  const key = "raceHistory";
+  const history = JSON.parse(localStorage.getItem(key)) || [];
+  history.push(data);
+  localStorage.setItem(key, JSON.stringify(history));
+  alert("履歴に保存しました！");
+}
+
   </script>
   <footer>
   <a href="privacy.html">プライバシーポリシー</a>
   </footer>
+  
 </body>
 </html>

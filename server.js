@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-const path = require('path'); // 追加
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,9 +9,11 @@ const PORT = process.env.PORT || 3000;
 // ミドルウェア設定
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static('public')); // 静的ファイル (HTML/CSS/画像など)
 
-// ads.txt と robots.txt を明示的に配信
+// 静的ファイルを正しくルートから配信
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ads.txt や robots.txt のための明示ルーティング（念のため）
 app.get('/ads.txt', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'ads.txt'));
 });
