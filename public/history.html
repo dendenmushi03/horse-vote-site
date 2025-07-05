@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>予想履歴</title>
-  <link rel="stylesheet" href="style-race.css">
+  <link rel="stylesheet" href="style-race.css" />
   <style>
+    .clickable {
+      cursor: pointer;
+      color: #007bff;
+      margin: 0.5rem 0;
+    }
+    .clickable:hover {
+      text-decoration: underline;
+    }
     .history-card {
       background: #fff;
       border-radius: 12px;
       padding: 1rem;
       margin: 1rem auto;
       max-width: 600px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
     .history-card h3 {
       margin-top: 0;
@@ -28,27 +36,54 @@
     <a href="index.html"><button class="green-btn">トップページへ</button></a>
     <button class="red-btn" onclick="clearHistory()">履歴を全削除</button>
   </div>
-  <div id="historyContainer"></div>
+
+  <div class="card">
+    <h2>予想レース一覧</h2>
+    <ul id="raceList"></ul>
+  </div>
+
+  <div class="card" id="raceDetail" style="display: none;">
+    <h2 id="detailTitle"></h2>
+    <p id="detailDate"></p>
+    <ul id="detailList"></ul>
+  </div>
 
   <script>
-    const container = document.getElementById("historyContainer");
+    const raceListEl = document.getElementById("raceList");
+    const raceDetailEl = document.getElementById("raceDetail");
+    const detailTitle = document.getElementById("detailTitle");
+    const detailDate = document.getElementById("detailDate");
+    const detailList = document.getElementById("detailList");
+
     const history = JSON.parse(localStorage.getItem("raceHistory")) || [];
 
     if (history.length === 0) {
-      container.innerHTML = "<p style='text-align:center;'>履歴がありません。</p>";
+      raceListEl.innerHTML = "<p>履歴がありません。</p>";
     } else {
-      history.reverse().forEach(entry => {
-        const div = document.createElement("div");
-        div.className = "history-card";
-        div.innerHTML = `
-          <h3>${entry.title}</h3>
-          <p><small>${entry.date}</small></p>
-          <ul>
-            ${entry.horses.map(h => `<li class="horse-entry">${h.number} ${h.name}：${h.score}</li>`).join("")}
-          </ul>
-        `;
-        container.appendChild(div);
+      history.forEach((entry, index) => {
+        const li = document.createElement("li");
+        li.textContent = `${entry.title}（${entry.date}）`;
+        li.className = "clickable";
+        li.onclick = () => showDetail(index);
+        raceListEl.appendChild(li);
       });
+    }
+
+    function showDetail(index) {
+      const data = history[index];
+      detailTitle.textContent = data.title;
+      detailDate.textContent = data.date;
+      detailList.innerHTML = "";
+
+      data.horses.forEach(horse => {
+        const li = document.createElement("li");
+        li.className = "horse-entry";
+        li.textContent = `${horse.number} ${horse.name || ""}：${horse.score}`;
+        detailList.appendChild(li);
+      });
+
+      raceDetailEl.style.display = "block";
+      raceDetailEl.scrollIntoView({ behavior: "smooth" });
     }
 
     function clearHistory() {

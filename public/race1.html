@@ -13,8 +13,6 @@
       <a href="index.html"><button class="green-btn">トップページに戻る</button></a>
       <button class="red-btn" onclick="confirmResetAll()">全リセット</button>
       <button class="orange-btn" onclick="confirmResetScores()">評価リセット</button>
-      <button class="orange-btn" onclick="saveFactorTemplate()">テンプレ保存</button>
-      <button class="blue-btn" onclick="loadFactorTemplate()">テンプレ読み込み</button>
       <button class="blue-btn" onclick="saveToHistory()">履歴に保存</button>
     </div>
   </div>
@@ -214,23 +212,6 @@
       updateScores();
     }
 
-    function loadFactorTemplate() {
-  const saved = JSON.parse(localStorage.getItem("factorTemplate") || "[]");
-  if (!saved.length) return alert("テンプレートが保存されていません。");
-
-  const factorThs = [...headerRow.querySelectorAll("th")].filter(th => th.querySelector("input"));
-  factorThs.forEach(th => th.remove());
-  [...body.rows].forEach(row => {
-  while (row.children.length > 3) {
-  row.removeChild(row.children[2]);
-  }
-  });
-  currentFactors = 0;
-
-  // テンプレを再追加
-  saved.forEach(name => addFactor(name));
-}
-
     function confirmResetAll() {
       if (confirm("すべての評価と設定をリセットします。本当によろしいですか？")) {
         localStorage.removeItem(storageKey);
@@ -269,20 +250,6 @@
   history.push(data);
   localStorage.setItem(key, JSON.stringify(history));
   alert("履歴に保存しました！");
-}
-
-function saveFactorTemplate() {
-  const factorNames = [...headerRow.children]
-    .slice(2, 2 + currentFactors)
-    .map(th => th.querySelector("input")?.value || "");
-
-  if (factorNames.length === 0) {
-    alert("保存するファクターがありません。");
-    return;
-  }
-
-  localStorage.setItem("factorTemplate", JSON.stringify(factorNames));
-  alert("ファクターテンプレートを保存しました！");
 }
 
 function shareOnTwitter() {
