@@ -6,92 +6,124 @@
   <title>予想履歴</title>
   <link rel="stylesheet" href="style-race.css" />
   <style>
-    .clickable {
-      cursor: pointer;
-      color: #007bff;
-      margin: 0.5rem 0;
+    .button-group-center {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
     }
-    .clickable:hover {
-      text-decoration: underline;
-    }
-    .history-card {
+    .history-list {
       background: #fff;
       border-radius: 12px;
       padding: 1rem;
       margin: 1rem auto;
-      max-width: 600px;
+      max-width: 800px;
       box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     }
-    .history-card h3 {
-      margin-top: 0;
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #ccc;
     }
-    .horse-entry {
-      margin-left: 1rem;
+    .history-item button {
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .history-item button:hover {
+      background-color: #c0392b;
+    }
+    .history-detail {
+      margin: 1rem auto;
+      max-width: 800px;
+      background: #fff;
+      padding: 1rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .history-detail h3 {
+      margin-top: 0;
     }
   </style>
 </head>
 <body>
   <div class="card header-card">
     <h1>📚 予想履歴</h1>
-    <a href="index.html"><button class="green-btn">トップページへ</button></a>
-    <button class="red-btn" onclick="clearHistory()">履歴を全削除</button>
+    <div class="button-group-center">
+      <a href="index.html"><button class="green-btn">トップページへ</button></a>
+      <button class="red-btn" onclick="clearHistory()">履歴を全削除</button>
+    </div>
   </div>
 
-  <div class="card">
+  <div class="history-list">
     <h2>予想レース一覧</h2>
-    <ul id="raceList"></ul>
+    <div id="historyContainer"></div>
   </div>
 
-  <div class="card" id="raceDetail" style="display: none;">
-    <h2 id="detailTitle"></h2>
-    <p id="detailDate"></p>
-    <ul id="detailList"></ul>
-  </div>
+  <div class="history-detail" id="historyDetail" style="display:none;"></div>
 
   <script>
-    const raceListEl = document.getElementById("raceList");
-    const raceDetailEl = document.getElementById("raceDetail");
-    const detailTitle = document.getElementById("detailTitle");
-    const detailDate = document.getElementById("detailDate");
-    const detailList = document.getElementById("detailList");
+    const container = document.getElementById("historyContainer");
+    const detail = document.getElementById("historyDetail");
+    let history = JSON.parse(localStorage.getItem("raceHistory")) || [];
 
-    const history = JSON.parse(localStorage.getItem("raceHistory")) || [];
+    function renderHistory() {
+      container.innerHTML = "";
+      if (history.length === 0) {
+        container.innerHTML = "<p style='text-align:center;'>履歴がありません。</p>";
+        detail.style.display = "none";
+        return;
+      }
 
-    if (history.length === 0) {
-      raceListEl.innerHTML = "<p>履歴がありません。</p>";
-    } else {
       history.forEach((entry, index) => {
-        const li = document.createElement("li");
-        li.textContent = `${entry.title}（${entry.date}）`;
-        li.className = "clickable";
-        li.onclick = () => showDetail(index);
-        raceListEl.appendChild(li);
+        const item = document.createElement("div");
+        item.className = "history-item";
+        item.innerHTML = `
+          <div>
+            <a href="#" onclick="showDetail(${index})">🔵 ${entry.title}</a>
+            <span style="margin-left: 1rem; font-size: 0.9em;">（${entry.date}）</span>
+          </div>
+          <button onclick="deleteEntry(${index})">🗑</button>
+        `;
+        container.appendChild(item);
       });
     }
 
     function showDetail(index) {
-      const data = history[index];
-      detailTitle.textContent = data.title;
-      detailDate.textContent = data.date;
-      detailList.innerHTML = "";
+      const entry = history[index];
+      detail.style.display = "block";
+      detail.innerHTML = `
+        <h3>${entry.title}</h3>
+        <p><small>${entry.date}</small></p>
+        <ul>
+          ${entry.horses.map(h => `<li>${h.number} ${h.name}：${h.score}</li>`).join("")}
+        </ul>
+      `;
+    }
 
-      data.horses.forEach(horse => {
-        const li = document.createElement("li");
-        li.className = "horse-entry";
-        li.textContent = `${horse.number} ${horse.name || ""}：${horse.score}`;
-        detailList.appendChild(li);
-      });
-
-      raceDetailEl.style.display = "block";
-      raceDetailEl.scrollIntoView({ behavior: "smooth" });
+    function deleteEntry(index) {
+      if (confirm("この履歴を削除しますか？")) {
+        history.splice(index, 1);
+        localStorage.setItem("raceHistory", JSON.stringify(history));
+        renderHistory();
+        detail.style.display = "none";
+      }
     }
 
     function clearHistory() {
       if (confirm("本当に履歴を全て削除しますか？")) {
         localStorage.removeItem("raceHistory");
-        location.reload();
+        history = [];
+        renderHistory();
       }
     }
+
+    renderHistory();
   </script>
 </body>
 </html>

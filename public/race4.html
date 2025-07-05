@@ -13,6 +13,7 @@
       <a href="index.html"><button class="green-btn">トップページに戻る</button></a>
       <button class="red-btn" onclick="confirmResetAll()">全リセット</button>
       <button class="orange-btn" onclick="confirmResetScores()">評価リセット</button>
+      <button class="blue-btn" onclick="saveToHistory()">履歴に保存</button>
     </div>
   </div>
 
@@ -38,6 +39,11 @@
       <h2>🏆 ランキング</h2>
       <ol id="rankingList"></ol>
     </div>
+
+    <div style="text-align: center; margin-top: 1rem;">
+    <button class="blue-btn" onclick="shareOnTwitter()">Xで予想を共有</button>
+    </div>
+
   </div>
 
   <script>
@@ -84,42 +90,68 @@
     }
 
     function addFactor(name = "") {
-      if (currentFactors >= maxFactors) return;
-      const th = document.createElement("th");
-      const wrapper = document.createElement("div");
-      wrapper.className = "factor-header-wrapper";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = `ファクター${currentFactors + 1}`;
-      input.value = name;
-      input.oninput = saveData;
-      const delBtn = document.createElement("button");
-      delBtn.textContent = "✕";
-      delBtn.className = "factor-btn delete-btn";
-      delBtn.onclick = () => removeSpecificFactor(currentFactors);
-      wrapper.append(input, delBtn);
-      th.appendChild(wrapper);
-      headerRow.insertBefore(th, controlCell);
-      [...body.rows].forEach(row => {
-        row.insertBefore(createSelectCell(), row.children[row.children.length - 2]);
-      });
-      currentFactors++;
-      updateScores();
-      saveData();
-    }
+  if (currentFactors >= maxFactors) return;
+
+  const th = document.createElement("th");
+  const wrapper = document.createElement("div");
+  wrapper.className = "factor-header-wrapper";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = `ファクター${currentFactors + 1}`;
+  input.value = name;
+  input.oninput = saveData;
+
+  const delBtn = document.createElement("button");
+  delBtn.textContent = "✕";
+  delBtn.className = "factor-btn delete-btn";
+
+  // ❗ここが重要：クリック時にインデックスを特定して削除
+  delBtn.onclick = function () {
+    const allFactorThs = [...headerRow.querySelectorAll("th")].filter(th => th.querySelector("input"));
+    const index = allFactorThs.indexOf(th);
+    if (index !== -1) removeSpecificFactor(index);
+  };
+
+  wrapper.append(input, delBtn);
+  th.appendChild(wrapper);
+
+  headerRow.insertBefore(th, controlCell);
+  [...body.rows].forEach(row => {
+    row.insertBefore(createSelectCell(), row.children[row.children.length - 2]);
+  });
+
+  currentFactors++;
+  updateScores();
+  saveData();
+}
 
     function removeLastFactor() {
       if (currentFactors > minFactors) removeSpecificFactor(currentFactors - 1);
     }
 
     function removeSpecificFactor(index) {
-      if (currentFactors <= minFactors) return;
-      headerRow.removeChild(headerRow.children[2 + index]);
-      [...body.rows].forEach(row => row.removeChild(row.children[2 + index]));
-      currentFactors--;
-      updateScores();
-      saveData();
-    }
+  if (currentFactors <= minFactors) return;
+
+  // 要素を明示的に取得して削除（children[]でなくquerySelector）
+  const factorThs = [...headerRow.querySelectorAll("th")].filter(th =>
+    th.querySelector("input")
+  );
+
+  const thToRemove = factorThs[index];
+  if (thToRemove) thToRemove.remove();
+
+  // 各rowからも同様に該当のファクター列を削除
+  [...body.rows].forEach(row => {
+    const factorTds = [...row.querySelectorAll("td")].slice(2, 2 + currentFactors);
+    const tdToRemove = factorTds[index];
+    if (tdToRemove) tdToRemove.remove();
+  });
+
+  currentFactors--;
+  updateScores();
+  saveData();
+}
 
     function updateScores() {
       [...body.rows].forEach(row => {
@@ -198,9 +230,46 @@
     for (let i = 1; i <= horseCount; i++) createHorseRow(i);
     loadData();
     while (currentFactors < minFactors) addFactor();
+  
+  function saveToHistory() {
+  const raceTitle = document.getElementById("raceTitle").textContent;
+  const timestamp = new Date().toLocaleString();
+
+  const data = {
+    title: raceTitle,
+    date: timestamp,
+    horses: [...body.rows].map(row => ({
+      number: row.cells[0].textContent,
+      name: row.cells[1].querySelector("input").value,
+      score: row.querySelector(".score").textContent
+    }))
+  };
+
+  const key = "raceHistory";
+  const history = JSON.parse(localStorage.getItem(key)) || [];
+  history.push(data);
+  localStorage.setItem(key, JSON.stringify(history));
+  alert("履歴に保存しました！");
+}
+
+function shareOnTwitter() {
+  const raceTitle = document.getElementById("raceTitle").textContent;
+  const top3 = [...document.querySelectorAll("#rankingList li")]
+    .slice(0, 3)
+    .map(li => li.textContent.replace(/\s+/g, ' '))
+    .join('\n');
+
+  const text = `🏇 ${raceTitle} の予想結果\n\n${top3}\n\n#競馬予想 #AI予想 #馬券王`;
+  const url = encodeURIComponent(location.href);
+  const tweet = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${url}`;
+
+  window.open(tweet, '_blank');
+}
+
   </script>
   <footer>
   <a href="privacy.html">プライバシーポリシー</a>
   </footer>
+  
 </body>
 </html>
