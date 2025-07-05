@@ -218,8 +218,14 @@
   const saved = JSON.parse(localStorage.getItem("factorTemplate") || "[]");
   if (!saved.length) return alert("テンプレートが保存されていません。");
 
-  // 現在のファクターを全削除
-  while (currentFactors > minFactors) removeLastFactor();
+  const factorThs = [...headerRow.querySelectorAll("th")].filter(th => th.querySelector("input"));
+  factorThs.forEach(th => th.remove());
+  [...body.rows].forEach(row => {
+  while (row.children.length > 3) {
+  row.removeChild(row.children[2]);
+  }
+  });
+  currentFactors = 0;
 
   // テンプレを再追加
   saved.forEach(name => addFactor(name));
